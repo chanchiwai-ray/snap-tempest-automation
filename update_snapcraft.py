@@ -62,8 +62,12 @@ def parse_excluded_plugins(path):
 def parse_manual_requirements(path):
     """Parse a requirements.txt path.
 
-    Ingests a path and returns a set of requirement strings.
-    Comments are stripped, and invalid requirements are skipped.
+    Ingests a path and returns a set of requirement strings. The line in the
+    requirement.txt are processed the following way:
+
+    1. Blank lines are skipped
+    2. Comment lines are skipped
+    3. Inline comment is stripped
     """
     manual_requirements = set()
 
@@ -75,10 +79,17 @@ def parse_manual_requirements(path):
 
     with open(manual_requirements_path, encoding="utf-8") as req_file:
         for line in req_file:
+            # 1. skip blank line
+            # 2. skip comment line
+            # 3. strip inline comment
+            line = line.split("#", maxsplit=1)[0].strip()
+            if not line:
+                continue
+
+            # Parse the package definition
             try:
-                # Requirement cannot handle comments
-                req = Requirement(line.split("#", maxsplit=1)[0])
-                manual_requirements.add(str(req))
+                package = Requirement(line)
+                manual_requirements.add(str(package))
             except InvalidRequirement as err:
                 msg = f"ERROR: cannot parse manual requirements\n{err}"
                 sys.exit(msg)

@@ -5,6 +5,10 @@ on:
         description: OpenStack release
         type: string
         required: true
+    secrets:
+      PR_PAT:
+        required: true
+
 
 env:
   SNAP_REPO_PATH: snap-tempest
@@ -46,7 +50,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         id: create_pr
         with:
-          token: ${{ secrets.SNAP_TEMPEST_PR_TOKEN_CLASSIC }}
+          token: ${{ secrets.PR_PAT }}
           path: ${{ env.SNAP_REPO_PATH }}
           title: "release(${{ inputs.openstack-release }}): update snapcraft.yaml"
           commit-message: |

@@ -13,3 +13,5 @@ jobs:
     uses: ./.github/workflows/update-snapcraft.yaml
     with:
       openstack-release: ${{ matrix.release }}
+    secrets:
+      PR_PAT: ${{ secrets.SNAP_TEMPEST_PR_TOKEN }}

@@ -45,10 +45,8 @@ jobs:
         if: ${{ steps.update_snapcraft.outputs.create_pr == 1 }}
         uses: peter-evans/create-pull-request@v6
         id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ github.token }}  # Use the auto-generated action token
         with:
-          token: ${{ github.token }}  # Use the auto-generated action token
+          token: ${{ secrets.SNAP_TEMPEST_PR_TOKEN }}
           path: ${{ env.SNAP_REPO_PATH }}
           title: "release(${{ inputs.openstack-release }}): update snapcraft.yaml"
           commit-message: |

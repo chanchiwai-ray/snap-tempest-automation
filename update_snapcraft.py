@@ -31,8 +31,8 @@ OPENSTACK_TAGS_RSS_FEED_FMT = OPENDEV_BASE_URL + "/{project}/tags.rss"
 OPENSTACK_REPO_URL_FMT = OPENDEV_GIT_BASE_URL + "/{project}.git@{ref}"
 OPENINFRA_REPO_URL_FMT = OPENDEV_GIT_BASE_URL + "/openinfra/{project}.git@{ref}"
 PYPI_RSS_FEED_FMT = "https://pypi.org/rss/project/{project}/releases.xml"
-MANUAL_REQUIREMENTS = Path(__file__).parents[1] / Path("requirements-manual.txt")
-EXCLUDED_PLUGINS_PATH = Path(__file__).parents[1] / Path("excluded-plugins.txt")
+MANUAL_REQUIREMENTS_PATH = Path(__file__).parents[0] / Path("requirements-manual.txt")
+EXCLUDED_PLUGINS_PATH = Path(__file__).parents[0] / Path("excluded-plugins.txt")
 
 
 def parse_excluded_plugins(path):
@@ -42,11 +42,16 @@ def parse_excluded_plugins(path):
     """
     excluded_plugins = set()
 
-    if path.exists():
-        with open(path, encoding="utf-8") as excl_file:
-            for line in excl_file:
-                plugin = line.split("#", maxsplit=1)[0].strip()
-                excluded_plugins.add(plugin)
+    # This provides a second default layer: since the GitHub workflow provides
+    # a fixed path in the snap-tempest checkout, that path may not actually
+    # exist. When that happens, we can use the list provided in this repo as a
+    # non-per-release default
+    excluded_plugins_path = path if path.exists() else EXCLUDED_PLUGINS_PATH
+
+    with open(excluded_plugins_path, encoding="utf-8") as excl_file:
+        for line in excl_file:
+            plugin = line.split("#", maxsplit=1)[0].strip()
+            excluded_plugins.add(plugin)
 
     # Lines starting with a comment would have been added here as empty strings
     excluded_plugins.discard("")
@@ -62,15 +67,21 @@ def parse_manual_requirements(path):
     """
     manual_requirements = set()
 
-    if path.exists():
-        with open(path, encoding="utf-8") as req_file:
-            for line in req_file:
-                try:
-                    # Requirement cannot handle comments
-                    req = Requirement(line.split("#", maxsplit=1)[0])
-                    manual_requirements.add(str(req))
-                except InvalidRequirement:
-                    pass
+    # This provides a second default layer: since the GitHub workflow provides
+    # a fixed path in the snap-tempest checkout, that path may not actually
+    # exist. When that happens, we can use the list provided in this repo as a
+    # non-per-release default
+    manual_requirements_path = path if path.exists() else MANUAL_REQUIREMENTS_PATH
+
+    with open(manual_requirements_path, encoding="utf-8") as req_file:
+        for line in req_file:
+            try:
+                # Requirement cannot handle comments
+                req = Requirement(line.split("#", maxsplit=1)[0])
+                manual_requirements.add(str(req))
+            except InvalidRequirement as err:
+                msg = f"ERROR: cannot parse manual requirements\n{err}"
+                sys.exit(msg)
 
     return manual_requirements
 
@@ -80,7 +91,33 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument("-r", "--release", required=True, type=str, help="OpenStack release")
     parser.add_argument(
-        "-o", "--output", default="/dev/stdout", type=str, help="Output file. Defaults to stdout"
+        "-i",
+        "--input",
+        required=True,
+        type=str,
+        help="Input snapcraft.yaml file to update",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="/dev/stdout",
+        type=str,
+        help="Output file. Defaults to stdout",
+    )
+    parser.add_argument(
+        "-e",
+        "--excluded-plugins",
+        default=EXCLUDED_PLUGINS_PATH,
+        help="Path to a list of excluded plugins",
+    )
+    parser.add_argument(
+        "-m",
+        "--manual-requirements",
+        default=MANUAL_REQUIREMENTS_PATH,
+        help=(
+            "Path to a list of manual requirements to add to the ones retrieved from "
+            "the OpenStack releases repo"
+        ),
     )
     parser.add_argument(
         "--reuse",
@@ -179,14 +216,14 @@ def clone_releases_repository(reuse):
 def main(args):
     """Entry point to the application."""
     clone_releases_repository(args.reuse)
-    excluded_plugins = parse_excluded_plugins(EXCLUDED_PLUGINS_PATH)
-    snapcraft_yaml_path = Path(__file__).parent.parent / "snap" / "snapcraft.yaml"
-    snapcraft_yaml = yaml.load(snapcraft_yaml_path.read_text())
+    excluded_plugins = parse_excluded_plugins(Path(args.excluded_plugins))
+    snapcraft_yaml_path = Path(args.input)
+    snapcraft_yaml = yaml.load(snapcraft_yaml_path.read_text(encoding="UTF-8"))
 
     snapcraft_yaml["parts"]["tempest"]["source-tag"] = get_latest_tempest_revision(args.release)
 
     snapcraft_yaml["parts"]["tempest"]["python-packages"] = [
-        *parse_manual_requirements(MANUAL_REQUIREMENTS),
+        *parse_manual_requirements(Path(args.manual_requirements)),
         *get_latest_plugin_requirements(args.release, excluded_plugins),
         get_latest_tempestconf_requirements(),
     ]

@@ -46,7 +46,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         id: create_pr
         with:
-          token: ${{ secrets.SNAP_TEMPEST_PR_TOKEN }}
+          token: ${{ secrets.SNAP_TEMPEST_PR_TOKEN_CLASSIC }}
           path: ${{ env.SNAP_REPO_PATH }}
           title: "release(${{ inputs.openstack-release }}): update snapcraft.yaml"
           commit-message: |

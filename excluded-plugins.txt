@@ -9,7 +9,7 @@ ec2api-tempest-plugin
 freezer-tempest-plugin
 kuryr-tempest-plugin
 mistral-tempest-plugin
-monasca-tempest-plugin
+monasca-tempest-plugin # if re-enabling, add the confluent-kafka package. See https://github.com/canonical/snap-tempest/pull/10#issuecomment-1682115758
 murano-tempest-plugin
 oswin-tempest-plugin
 sahara-tests

@@ -14,6 +14,7 @@ murano-tempest-plugin
 oswin-tempest-plugin
 sahara-tests
 senlin-tempest-plugin
+solum-tempest-plugin
 trove-tempest-plugin
 venus-tempest-plugin
 vitrage-tempest-plugin

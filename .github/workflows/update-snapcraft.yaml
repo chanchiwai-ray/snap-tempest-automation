@@ -53,7 +53,7 @@ jobs:
               && echo "create_pr=0" >> $GITHUB_OUTPUT \
               || echo "create_pr=1" >> $GITHUB_OUTPUT
       - name: Upload snapcraft.yaml to github artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.0.0  # due to https://github.com/actions/download-artifact/issues/328
         if: ${{ steps.update_snapcraft.outputs.create_pr == 1 }}
         with:
           name: updated_snapcraft_yaml_${{ inputs.openstack-release }}
@@ -70,10 +70,10 @@ jobs:
         ref: stable/${{ inputs.openstack-release }}
         repository: ${{ env.REPO_OWNER }}/${{ env.SNAP_REPO_PATH }}
     - name: Download snapcraft.yaml from github artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v4.0.0  # due to https://github.com/actions/download-artifact/issues/328
       with:
         name: updated_snapcraft_yaml_${{ inputs.openstack-release }}
-        path: ./snap/snapcraft.yaml
+        path: ./snap
     - uses: actions/create-github-app-token@v1
       id: app_token
       with:

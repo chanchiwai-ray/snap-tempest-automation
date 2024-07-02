@@ -4,6 +4,7 @@
 # They will be excluded from the snap for now
 blazar-tempest-plugin
 cloudkitty-tempest-plugin
+congress-tempest-plugin
 cyborg-tempest-plugin
 ec2api-tempest-plugin
 freezer-tempest-plugin

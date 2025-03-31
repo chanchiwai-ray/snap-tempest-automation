@@ -1,5 +1,10 @@
 on:
   workflow_dispatch:
+    inputs:
+      openstack-release:
+        description: OpenStack release
+        type: string
+        required: true
   workflow_call:
     inputs:
       openstack-release:
